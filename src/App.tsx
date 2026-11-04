@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import AddEntry from './pages/AddEntry'
 import Budgets from './pages/Budgets'
+import Profile from './pages/Profile'
 import { Icon } from './components'
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/tambah" element={<AddEntry key="new" />} />
           <Route path="/ubah/:table/:id" element={<AddEntry key="edit" />} />
           <Route path="/anggaran" element={<Budgets />} />
+          <Route path="/profil" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
@@ -45,7 +47,7 @@ export default function App() {
         <NavLink to="/transaksi"><Icon name="list" /><span>Transaksi</span></NavLink>
         <NavLink to="/tambah" className="add"><Icon name="plus" /><span>Catat</span></NavLink>
         <NavLink to="/anggaran"><Icon name="target" /><span>Anggaran</span></NavLink>
-        <button onClick={() => confirm('Keluar dari akun ini?') && supabase.auth.signOut()}><Icon name="logout" /><span>Keluar</span></button>
+        <NavLink to="/profil"><Icon name="user" /><span>Profil</span></NavLink>
       </nav>
     </div>
   )

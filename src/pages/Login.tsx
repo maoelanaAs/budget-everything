@@ -27,8 +27,11 @@ export default function Login() {
   return (
     <div className="center">
       <form className="login" onSubmit={submit}>
-        <div className="logo" aria-hidden="true">Rp</div>
-        <h1>Budgeting</h1>
+        <img className="brand-logo" src="/logo.png" alt="" width="76" height="76" />
+        <div>
+          <h1 className="wordmark"><span>Budget</span><span>Everything</span></h1>
+          <p className="tagline">Take Control of Your Money</p>
+        </div>
         {sent ? (
           <p>Tautan masuk sudah dikirim ke <b>{email}</b>. Buka email di perangkat ini lalu ketuk tautannya.</p>
         ) : (

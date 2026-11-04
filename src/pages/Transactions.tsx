@@ -18,6 +18,7 @@ export default function Transactions() {
   const [q, setQ] = useState('')
   const [kind, setKind] = useState<'' | Kind>('')
   const [open, setOpen] = useState('')
+  const [folded, setFolded] = useState<string[]>([])   // tanggal yang diciutkan
   const toast = useToast()
   const nav = useNavigate()
   const txs = useTransactions(start)
@@ -28,12 +29,13 @@ export default function Transactions() {
 
   const rows = useMemo<Row[]>(() => {
     const cn = new Map((cats.data ?? []).map((c) => [c.id, c.name]))
+    const ci = new Map((cats.data ?? []).map((c) => [c.id, c.icon]))
     const an = new Map((accs.data ?? []).map((a) => [a.id, a.name]))
     const a: Row[] = (txs.data ?? []).map((t) => {
       const name = t.type === 'adjustment' ? 'Koreksi saldo' : cn.get(t.category_id ?? '') ?? 'Tanpa kategori'
       return {
         key: 't' + t.id, date: t.tx_date, table: 'transactions', id: t.id, kind: t.type,
-        icon: t.type === 'adjustment' ? '⚖️' : emoji(name), title: name,
+        icon: t.type === 'adjustment' ? '⚖️' : emoji(name, ci.get(t.category_id ?? '')), title: name,
         sub: [an.get(t.account_id), t.note].filter(Boolean).join(' – '), amount: t.amount,
       }
     })
@@ -46,6 +48,7 @@ export default function Transactions() {
   }, [txs.data, trs.data, cats.data, accs.data])
 
   const shown = rows.filter((r) => (!kind || r.kind === kind) && (!q || (r.title + ' ' + r.sub).toLowerCase().includes(q.toLowerCase())))
+  const days = [...new Set(shown.map((r) => r.date))]
   const byDay = shown.reduce<Record<string, Row[]>>((m, r) => ((m[r.date] ??= []).push(r), m), {})
 
   const money = (r: Row) =>
@@ -61,7 +64,7 @@ export default function Transactions() {
 
   return (
     <>
-      <header className="head"><h1>Transaksi</h1><MonthPicker value={start} onChange={setStart} /></header>
+      <header className="head"><h1>Transaksi</h1><MonthPicker value={start} onChange={(v) => { setStart(v); setFolded([]); setOpen('') }} /></header>
 
       <label className="search">
         <Icon name="search" />
@@ -74,12 +77,25 @@ export default function Transactions() {
       </div>
 
       <Loading q={txs} />
+      {days.length > 1 && (
+        <div className="foldall">
+          <button className="link" onClick={() => setFolded(folded.length === days.length ? [] : days)}>
+            {folded.length === days.length ? 'Buka semua hari' : 'Ciutkan semua hari'}
+          </button>
+        </div>
+      )}
       {Object.entries(byDay).map(([date, list]) => {
         const out = list.filter((r) => r.kind === 'expense').reduce((s, r) => s + r.amount, 0)
+        const inc = list.filter((r) => r.kind === 'income').reduce((s, r) => s + r.amount, 0)
+        const isFolded = folded.includes(date)
         return (
           <section key={date} className="day">
-            <div className="day-head"><h3>{dayLabel(date)}</h3>{out > 0 && <span className="muted small">Keluar {rp(out)}</span>}</div>
-            <div className="sheet">
+            <button className="day-head" aria-expanded={!isFolded} onClick={() => setFolded(isFolded ? folded.filter((d) => d !== date) : [...folded, date])}>
+              <span className={'fold' + (isFolded ? '' : ' open')} aria-hidden="true"><Icon name="chevron" /></span>
+              <span className="day-title"><h3>{dayLabel(date)}</h3><small className="muted">{list.length} catatan</small></span>
+              <span className="muted small">{out > 0 ? `Keluar ${rp(out)}` : inc > 0 ? `Masuk ${rp(inc)}` : ''}</span>
+            </button>
+            {!isFolded && <div className="sheet">
               {list.map((r) => (
                 <div key={r.key} className="tx">
                   <button className="tx-main" aria-expanded={open === r.key} onClick={() => setOpen(open === r.key ? '' : r.key)}>
@@ -95,7 +111,7 @@ export default function Transactions() {
                   )}
                 </div>
               ))}
-            </div>
+            </div>}
           </section>
         )
       })}

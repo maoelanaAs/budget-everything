@@ -21,7 +21,7 @@ export const useAccounts = () =>
 export const useCategories = () =>
   useQuery({
     queryKey: ['categories'],
-    queryFn: async () => check(await supabase.from('categories').select('*').eq('is_active', true).order('sort_order')) as Category[],
+    queryFn: async () => check(await supabase.from('categories').select('*').order('sort_order')) as Category[],
   })
 
 export const useBalances = () =>

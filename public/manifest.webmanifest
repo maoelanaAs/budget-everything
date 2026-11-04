@@ -1,13 +1,22 @@
 {
-  "name": "Budgeting",
-  "short_name": "Budgeting",
-  "description": "Pencatat keuangan pribadi",
+  "name": "Budget Everything",
+  "short_name": "Budget Everything",
+  "description": "Budget Everything: pencatat keuangan pribadi. Take control of your money.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f6f7f5",
-  "theme_color": "#0f766e",
+  "background_color": "#fcfdfd",
+  "theme_color": "#fcfdfd",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

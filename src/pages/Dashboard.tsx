@@ -22,7 +22,8 @@ export default function Dashboard() {
     const budget = new Map((budgets.data ?? []).map((b) => [b.category_id, b.amount]))
     const rows = (cats.data ?? [])
       .filter((c) => c.type === 'expense')
-      .map((c) => ({ ...c, budget: budget.get(c.id) ?? 0, spent: spent.get(c.id) ?? 0 }))
+      .map((c) => ({ ...c, budget: budget.get(c.id) ?? 0, spent: spent.get(c.id) ?? 0, inBudget: budget.has(c.id) }))
+      .filter((c) => c.inBudget || c.spent > 0)
     const groups = (['need', 'want', 'saving'] as Grp[]).map((g) => {
       const items = rows.filter((x) => x.grp === g)
       return { g, items, budget: items.reduce((s, x) => s + x.budget, 0), spent: items.reduce((s, x) => s + x.spent, 0) }
@@ -62,6 +63,12 @@ export default function Dashboard() {
           </p>
           <p className="hero-foot">Saldo yang bisa dipakai {rp(usable)} untuk {left} hari lagi.</p>
         </section>
+      ) : d.totalBudget === 0 ? (
+        <section className="hero">
+          <p className="hero-label">Pengeluaran {monthLabel(start)}</p>
+          <p className="hero-num">{rp(d.totalSpent)}</p>
+          <p className="hero-sub">Belum ada anggaran untuk bulan ini.</p>
+        </section>
       ) : (
         <section className="hero">
           <p className="hero-label">Sisa anggaran {monthLabel(start)}</p>
@@ -74,42 +81,8 @@ export default function Dashboard() {
       <section className="figures" aria-label="Ringkasan bulan ini">
         <div><span>Pemasukan</span><b>{rp(d.totalIncome)}</b></div>
         <div><span>Pengeluaran</span><b>{rp(d.totalSpent)}</b></div>
-        <div><span>Sisa anggaran</span><b className={remaining < 0 ? 'neg' : ''}>{rp(remaining)}</b></div>
+        <div><span>Sisa anggaran</span>{d.totalBudget === 0 ? <b className="muted">Belum diatur</b> : <b className={remaining < 0 ? 'neg' : ''}>{rp(remaining)}</b>}</div>
       </section>
-
-      <h2 className="section">Anggaran per kategori</h2>
-      {d.totalBudget === 0 && !cats.isLoading && (
-        <p className="empty">Belum ada anggaran untuk {monthLabel(start)}. Atur di menu Anggaran.</p>
-      )}
-      {d.groups.map((g) => (
-        <section key={g.g} className="sheet">
-          <div className="sheet-head">
-            <div>
-              <h3>{GRP_LABEL[g.g]}</h3>
-              <span className="muted small">Terpakai {rp(g.spent)} dari {rp(g.budget)}</span>
-            </div>
-            <b className={g.budget - g.spent < 0 ? 'neg' : ''}>{rp(g.budget - g.spent)}</b>
-          </div>
-          {g.items.map((c) => {
-            const left = c.budget - c.spent
-            const idle = c.budget === 0 && c.spent === 0
-            return (
-              <div key={c.id} className={'cat' + (idle ? ' idle' : '')}>
-                <span className="emo" aria-hidden="true">{emoji(c.name)}</span>
-                <div className="cat-body">
-                  <div className="line">
-                    <span>{c.name}</span>
-                    <span className={left < 0 ? 'neg' : ''}>{left < 0 ? 'Lebih ' + rp(-left) : 'Sisa ' + rp(left)}</span>
-                  </div>
-                  <Bar ratio={c.budget ? c.spent / c.budget : c.spent ? 2 : 0} />
-                  <span className="muted small">{rp(c.spent)} dari {rp(c.budget)}</span>
-                </div>
-              </div>
-            )
-          })}
-        </section>
-      ))}
-      <Loading q={cats} />
 
       <details className="sheet accounts" open>
         <summary>
@@ -128,6 +101,41 @@ export default function Dashboard() {
         ))}
         <Loading q={balances} />
       </details>
+
+      <h2 className="section">Anggaran per kategori</h2>
+      {d.totalBudget === 0 && !cats.isLoading && (
+        <p className="empty">Belum ada kategori di anggaran {monthLabel(start)}. Pilih kategori dan atur nominalnya di menu Anggaran.</p>
+      )}
+      {d.groups.map((g) => (
+        <section key={g.g} className="sheet">
+          <div className="sheet-head">
+            <div>
+              <h3>{GRP_LABEL[g.g]}</h3>
+              <span className="muted small">Terpakai {rp(g.spent)} dari {rp(g.budget)}</span>
+            </div>
+            <b className={g.budget - g.spent < 0 ? 'neg' : ''}>{rp(g.budget - g.spent)}</b>
+          </div>
+          {g.items.map((c) => {
+            const left = c.budget - c.spent
+            const idle = c.budget === 0 && c.spent === 0
+            return (
+              <div key={c.id} className={'cat' + (idle ? ' idle' : '')}>
+                <span className="emo" aria-hidden="true">{emoji(c.name, c.icon)}</span>
+                <div className="cat-body">
+                  <div className="line">
+                    <span>{c.name}</span>
+                    <span className={left < 0 ? 'neg' : ''}>{left < 0 ? 'Lebih ' + rp(-left) : 'Sisa ' + rp(left)}</span>
+                  </div>
+                  <Bar ratio={c.budget ? c.spent / c.budget : c.spent ? 2 : 0} />
+                  <span className="muted small">{rp(c.spent)} dari {rp(c.budget)}</span>
+                </div>
+              </div>
+            )
+          })}
+        </section>
+      ))}
+      <Loading q={cats} />
+
     </>
   )
 }

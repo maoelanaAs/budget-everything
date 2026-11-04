@@ -103,7 +103,7 @@ export default function AddEntry() {
     })
   }
 
-  const list = cats.filter((c) => c.type === mode)
+  const list = cats.filter((c) => c.type === mode && (c.is_active || c.id === category))
   const showCats = mode === 'expense' || mode === 'income'
 
   return (
@@ -138,7 +138,7 @@ export default function AddEntry() {
             <div className="chips">
               {list.map((c) => (
                 <button key={c.id} type="button" className={'chip' + (category === c.id ? ' on' : '')} aria-pressed={category === c.id} onClick={() => setCategory(c.id)}>
-                  <span aria-hidden="true">{emoji(c.name)}</span>{c.name}
+                  <span aria-hidden="true">{emoji(c.name, c.icon)}</span>{c.name}
                 </button>
               ))}
             </div>

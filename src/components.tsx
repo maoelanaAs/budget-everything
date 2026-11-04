@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
-import { monthLabel, shiftMonth } from './format'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { monthLabel, monthStart, shiftMonth } from './format'
 
 /* ---------- ikon kategori ---------- */
 const EMOJI: Record<string, string> = {
@@ -8,11 +8,11 @@ const EMOJI: Record<string, string> = {
   'Keinginan Lainnya': '🎁', Investasi: '📈', Nabung: '🐷', Upskilling: '🎓',
   Gaji: '💼', Bonus: '🎉', 'Part Time': '⏱️', 'Orang Tua': '👪', Tabungan: '🐷',
 }
-export const emoji = (name: string) => EMOJI[name] ?? '🏷️'
+export const emoji = (name: string, icon?: string | null) => icon || EMOJI[name] || '🏷️'
 
 /* ---------- ikon navigasi ---------- */
 const P = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const
-export function Icon({ name }: { name: 'home' | 'list' | 'plus' | 'target' | 'logout' | 'search' | 'chevron' | 'edit' | 'trash' }) {
+export function Icon({ name }: { name: 'home' | 'list' | 'plus' | 'target' | 'logout' | 'search' | 'chevron' | 'edit' | 'trash' | 'user' | 'close' }) {
   const d: Record<string, ReactNode> = {
     home: <path d="M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10" />,
     list: <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />,
@@ -22,18 +22,59 @@ export function Icon({ name }: { name: 'home' | 'list' | 'plus' | 'target' | 'lo
     search: <><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></>,
     chevron: <path d="m9 6 6 6-6 6" />,
     edit: <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5l4 4" />,
+    user: <><circle cx="12" cy="8" r="4" /><path d="M4 20c1-4 4-6 8-6s7 2 8 6" /></>,
+    close: <path d="M6 6l12 12M18 6 6 18" />,
     trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3" />,
   }
   return <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" {...P}>{d[name]}</svg>
 }
 
-/* ---------- bulan ---------- */
+/* ---------- bulan: panah untuk geser, ketuk nama bulan untuk lompat bulan/tahun ---------- */
+const MONTHS = Array.from({ length: 12 }, (_, i) => new Date(2000, i, 1).toLocaleDateString('id-ID', { month: 'short' }))
 export function MonthPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [vy, vm] = value.split('-').map(Number)
+  const [year, setYear] = useState(vy)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { if (open) setYear(vy) }, [open, vy])
+  useEffect(() => {
+    if (!open) return
+    const away = (e: Event) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', away)
+    document.addEventListener('touchstart', away)
+    document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('mousedown', away); document.removeEventListener('touchstart', away); document.removeEventListener('keydown', esc) }
+  }, [open])
+
+  const pick = (y: number, m: number) => { onChange(`${y}-${String(m).padStart(2, '0')}-01`); setOpen(false) }
+  const thisMonth = monthStart(new Date())
+
   return (
-    <div className="monthpicker">
-      <button aria-label="Bulan sebelumnya" onClick={() => onChange(shiftMonth(value, -1))}>‹</button>
-      <span>{monthLabel(value)}</span>
-      <button aria-label="Bulan berikutnya" onClick={() => onChange(shiftMonth(value, 1))}>›</button>
+    <div className="mp" ref={ref}>
+      <div className="monthpicker">
+        <button aria-label="Bulan sebelumnya" onClick={() => onChange(shiftMonth(value, -1))}>‹</button>
+        <button className="mp-label" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <span>{monthLabel(value)}</span><i aria-hidden="true">▾</i>
+        </button>
+        <button aria-label="Bulan berikutnya" onClick={() => onChange(shiftMonth(value, 1))}>›</button>
+      </div>
+      {open && (
+        <div className="mp-panel" role="dialog" aria-label="Pilih bulan dan tahun">
+          <div className="mp-year">
+            <button aria-label="Tahun sebelumnya" onClick={() => setYear(year - 1)}>‹</button>
+            <b>{year}</b>
+            <button aria-label="Tahun berikutnya" onClick={() => setYear(year + 1)}>›</button>
+          </div>
+          <div className="mp-grid">
+            {MONTHS.map((name, i) => (
+              <button key={name} className={year === vy && i + 1 === vm ? 'on' : ''} onClick={() => pick(year, i + 1)}>{name}</button>
+            ))}
+          </div>
+          <button className="mp-now" onClick={() => { onChange(thisMonth); setOpen(false) }}>Bulan ini</button>
+        </div>
+      )}
     </div>
   )
 }

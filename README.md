@@ -1,4 +1,4 @@
-# Budgeting App
+# Budget Everything
 
 Aplikasi web (PWA) pencatat keuangan pribadi, online-only, dipetakan dari `BUDGETING.xlsx`.
 Stack: React + Vite + TypeScript, TanStack Query, Supabase (PostgreSQL + Auth). Biaya awal: gratis.
@@ -7,7 +7,8 @@ Stack: React + Vite + TypeScript, TanStack Query, Supabase (PostgreSQL + Auth). 
 - Ringkasan bulanan: pendapatan, anggaran vs realisasi per kelompok (Kebutuhan/Keinginan/Tabungan) dan per kategori, batas aman per hari, saldo tiap akun
 - Catat pengeluaran, pemasukan, mutasi antar akun (dengan biaya admin), dan penyesuaian saldo
 - Daftar transaksi per bulan dengan pencarian dan hapus
-- Atur anggaran per bulan, bisa salin dari bulan lalu
+- Atur anggaran per bulan: pilih kategori mana saja yang masuk, atur nominal, atau salin dari bulan lalu
+- Halaman Profil: lihat akun, keluar, dan kelola kategori (tambah, ubah nama/kelompok/ikon, hapus atau arsipkan)
 - Login email (magic link), data dilindungi Row Level Security
 - Bisa dipasang ke layar utama iPhone/Android (Share → Add to Home Screen)
 
@@ -20,9 +21,13 @@ Stack: React + Vite + TypeScript, TanStack Query, Supabase (PostgreSQL + Auth). 
 5. `npm install && npm run dev`, buka app, login dengan email Anda (supaya akun terbentuk). Email bawaan Supabase dibatasi ±2 per jam; kalau kena "email rate limit exceeded", atur kata sandi lewat SQL di bawah lalu masuk dengan kata sandi.
 6. Jalankan `supabase/seed.sql` di SQL Editor. Seed memakai user pertama di `auth.users`, jadi harus setelah langkah 5.
 
+Jika proyek Supabase sudah berjalan sebelum fitur kategori ditambahkan, jalankan sekali `supabase/migrations/001_category_icon.sql` di SQL Editor (menambah kolom ikon kategori).
+
 Untuk membuat ulang seed dari file Excel yang baru: `python3 scripts/make_seed.py scripts/BUDGETING.xlsx supabase/seed.sql` (butuh `openpyxl`).
 
 ## Deploy
+Sudah ada `vercel.json` (Vercel) dan `public/_redirects` (Netlify/Cloudflare Pages) supaya alamat seperti `/transaksi` tidak 404 saat dibuka langsung atau di-refresh.
+
 `npm run build`, lalu unggah folder `dist` ke Cloudflare Pages / Vercel / Netlify. Isi dua variabel `VITE_...` di pengaturan hosting.
 
 ## Aturan yang dibawa dari Excel

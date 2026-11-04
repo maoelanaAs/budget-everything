@@ -22,6 +22,7 @@ create table categories (
   name        text not null,
   type        category_type not null,
   grp         budget_group,                       -- hanya untuk expense
+  icon        text,                               -- emoji; kosong = otomatis dari nama
   sort_order  int not null default 0,
   is_active   boolean not null default true,
   unique (user_id, type, name)
