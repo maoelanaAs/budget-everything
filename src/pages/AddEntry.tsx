@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Loading, emoji, formatMoneyInput, parseMoney, useToast } from '../components'
-import { useAccounts, useAction, useCategories } from '../data'
+import { useAllAccounts, useAction, useCategories } from '../data'
 import { iso, rp, today } from '../format'
 import { supabase } from '../supabase'
 
@@ -30,7 +30,6 @@ export default function AddEntry() {
       return data as Record<string, unknown>
     },
   })
-  const accs = useAccounts().data ?? []
   const cats = useCategories().data ?? []
   const [mode, setMode] = useState<Mode>('expense')
   const [date, setDate] = useState(today())
@@ -43,6 +42,8 @@ export default function AddEntry() {
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
 
+  const allAccs = useAllAccounts().data ?? []
+  const accs = allAccs.filter((a) => a.is_active || a.id === account || a.id === to)
   const accountId = accs.some((a) => a.id === account) ? account : ''
 
   // isi formulir dari catatan yang diubah (sekali saja)
@@ -112,7 +113,7 @@ export default function AddEntry() {
       {editing && !validTable && <p className="error">Catatan tidak ditemukan.</p>}
       {editing && validTable && <Loading q={entry} />}
       {!editing && <div className="seg" role="tablist" aria-label="Jenis catatan">
-        {(Object.keys(LABEL) as Mode[]).map((m) => (
+        {(['expense', 'income', 'transfer'] as Mode[]).map((m) => (
           <button key={m} type="button" role="tab" aria-selected={m === mode} className={m === mode ? 'on' : ''} onClick={() => { setMode(m); setCategory(''); setError('') }}>{LABEL[m]}</button>
         ))}
       </div>}

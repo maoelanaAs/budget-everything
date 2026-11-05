@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Icon, Loading, emoji, useToast } from '../components'
+import { BackHead, Icon, Loading, emoji, useToast } from '../components'
 import { useCategories } from '../data'
 import { supabase } from '../supabase'
 import { GRP_LABEL, type Category, type Grp } from '../types'
@@ -9,17 +10,14 @@ const ICONS = ['🍜', '🍔', '☕', '🧋', '🛒', '🏠', '⚡', '💧', '�
 type Kind = 'expense' | 'income'
 interface Draft { id?: string; name: string; grp: Grp; icon: string }
 
-export default function Profile() {
+export default function CategorySettings() {
   const qc = useQueryClient()
   const toast = useToast()
   const cats = useCategories()
-  const [email, setEmail] = useState('')
-  const [kind, setKind] = useState<Kind>('expense')
+  const kind: Kind = useLocation().pathname.endsWith('/pemasukan') ? 'income' : 'expense'
   const [form, setForm] = useState<Draft | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-
-  useEffect(() => { supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? '')) }, [])
 
   const all = (cats.data ?? []).filter((c) => c.type === kind)
   const active = all.filter((c) => c.is_active)
@@ -100,20 +98,7 @@ export default function Profile() {
 
   return (
     <>
-      <header className="head"><h1>Profil</h1></header>
-
-      <section className="sheet">
-        <div className="sheet-head">
-          <div><h3>Akun</h3><span className="muted small">{email || 'Memuat…'}</span></div>
-          <button className="ghost small-btn" onClick={() => confirm('Keluar dari akun ini?') && supabase.auth.signOut()}>Keluar</button>
-        </div>
-      </section>
-
-      <h2 className="section">Kategori</h2>
-      <div className="seg two" role="tablist" aria-label="Jenis kategori">
-        <button role="tab" aria-selected={kind === 'expense'} className={kind === 'expense' ? 'on' : ''} onClick={() => { setKind('expense'); setForm(null) }}>Pengeluaran</button>
-        <button role="tab" aria-selected={kind === 'income'} className={kind === 'income' ? 'on' : ''} onClick={() => { setKind('income'); setForm(null) }}>Pemasukan</button>
-      </div>
+      <BackHead to="/pengaturan" label="Pengaturan" title={kind === 'expense' ? 'Kategori pengeluaran' : 'Kategori pemasukan'} />
 
       <Loading q={cats} />
 

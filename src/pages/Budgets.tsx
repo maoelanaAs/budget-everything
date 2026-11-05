@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Icon, Loading, MonthPicker, emoji, formatMoneyInput, parseMoney, useToast } from '../components'
+import { BackHead, Icon, Loading, MonthPicker, emoji, formatMoneyInput, parseMoney, useToast } from '../components'
 import { useBudgets, useCategories } from '../data'
 import { monthStart, rp, shiftMonth } from '../format'
 import { supabase } from '../supabase'
@@ -32,6 +32,8 @@ export default function Budgets() {
   const val = (id: string) => parseMoney(draft[id] || '0') || 0
   const sum = (g: Grp) => inBudget.filter((c) => c.grp === g).reduce((s, c) => s + val(c.id), 0)
   const total = inBudget.reduce((s, c) => s + val(c.id), 0)
+  const pct = (g: Grp) => (total > 0 ? (sum(g) / total) * 100 : 0)
+  const pctText = (g: Grp) => `${Math.round(pct(g))}%`
 
   const add = (id: string) => setIncl([...incl, id])
   const drop = (id: string) => { setIncl(incl.filter((x) => x !== id)); setDraft({ ...draft, [id]: '' }) }
@@ -68,7 +70,7 @@ export default function Budgets() {
 
   return (
     <>
-      <header className="head"><h1>Anggaran</h1><MonthPicker value={start} onChange={setStart} /></header>
+      <BackHead to="/pengaturan" label="Pengaturan" title="Anggaran"><MonthPicker value={start} onChange={setStart} /></BackHead>
       <Loading q={budgets} />
       <div className="budget-top">
         <button type="button" className="ghost" onClick={copyPrev}>Salin dari bulan lalu</button>
@@ -78,12 +80,28 @@ export default function Budgets() {
         <p className="empty">Belum ada kategori di anggaran bulan ini. Pilih kategori di bawah untuk memasukkannya.</p>
       )}
 
+      {total > 0 && (
+        <section className="sheet split" aria-label="Pembagian anggaran per kelompok">
+          <div className="splitbar" role="img" aria-label={(['need', 'want', 'saving'] as Grp[]).map((g) => `${GRP_LABEL[g]} ${pctText(g)}`).join(', ')}>
+            {(['need', 'want', 'saving'] as Grp[]).map((g) => <i key={g} className={'seg-' + g} style={{ width: `${pct(g)}%` }} />)}
+          </div>
+          <div className="splitkey">
+            {(['need', 'want', 'saving'] as Grp[]).map((g) => (
+              <div key={g}><span className={'dot seg-' + g} aria-hidden="true" /><span className="muted small">{GRP_LABEL[g]}</span><b>{pctText(g)}</b></div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {(['need', 'want', 'saving'] as const).map((g) => {
         const items = inBudget.filter((c) => c.grp === g)
         if (!items.length) return null
         return (
           <section key={g} className="sheet">
-            <div className="sheet-head"><h3>{GRP_LABEL[g]}</h3><b>{rp(sum(g))}</b></div>
+            <div className="sheet-head">
+              <div><h3>{GRP_LABEL[g]}</h3><span className="muted small">{pctText(g)} dari total anggaran</span></div>
+              <b>{rp(sum(g))}</b>
+            </div>
             {items.map((c) => (
               <div key={c.id} className="bud">
                 <span className="emo" aria-hidden="true">{emoji(c.name, c.icon)}</span>
@@ -110,7 +128,7 @@ export default function Budgets() {
         ) : (
           <p className="muted small pad">Semua kategori sudah masuk anggaran.</p>
         )}
-        <p className="muted small pad">Butuh kategori baru? <Link to="/profil">Kelola kategori di Profil</Link>.</p>
+        <p className="muted small pad">Butuh kategori baru? <Link to="/pengaturan/kategori/pengeluaran">Kelola kategori di Pengaturan</Link>.</p>
       </section>
 
       {msg && <p className="muted" role="status">{msg}</p>}

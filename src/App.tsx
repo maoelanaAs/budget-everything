@@ -8,12 +8,17 @@ import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import AddEntry from './pages/AddEntry'
 import Budgets from './pages/Budgets'
-import Profile from './pages/Profile'
-import { Icon } from './components'
+import Accounts from './pages/Accounts'
+import Settings from './pages/Settings'
+import CategorySettings from './pages/CategorySettings'
+import AccountSettings from './pages/AccountSettings'
+import { Icon, PrivacyCtx, usePrivacyState } from './components'
+import Stats from './pages/Stats'
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const qc = useQueryClient()
+  const privacy = usePrivacyState()
 
   useEffect(() => {
     if (!configured) return setSession(null)
@@ -30,6 +35,7 @@ export default function App() {
   if (!session) return <Login />
 
   return (
+    <PrivacyCtx.Provider value={privacy}>
     <div className="app">
       <main>
         <Routes>
@@ -37,8 +43,15 @@ export default function App() {
           <Route path="/transaksi" element={<Transactions />} />
           <Route path="/tambah" element={<AddEntry key="new" />} />
           <Route path="/ubah/:table/:id" element={<AddEntry key="edit" />} />
-          <Route path="/anggaran" element={<Budgets />} />
-          <Route path="/profil" element={<Profile />} />
+          <Route path="/statistik" element={<Stats />} />
+          <Route path="/akun" element={<Accounts />} />
+          <Route path="/pengaturan" element={<Settings />} />
+          <Route path="/pengaturan/kategori/pengeluaran" element={<CategorySettings key="expense" />} />
+          <Route path="/pengaturan/kategori/pemasukan" element={<CategorySettings key="income" />} />
+          <Route path="/pengaturan/akun" element={<AccountSettings />} />
+          <Route path="/pengaturan/anggaran" element={<Budgets />} />
+          <Route path="/anggaran" element={<Navigate to="/pengaturan/anggaran" replace />} />
+          <Route path="/profil" element={<Navigate to="/pengaturan" replace />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
@@ -46,10 +59,11 @@ export default function App() {
         <NavLink to="/" end><Icon name="home" /><span>Ringkasan</span></NavLink>
         <NavLink to="/transaksi"><Icon name="list" /><span>Transaksi</span></NavLink>
         <NavLink to="/tambah" className="add"><Icon name="plus" /><span>Catat</span></NavLink>
-        <NavLink to="/anggaran"><Icon name="target" /><span>Anggaran</span></NavLink>
-        <NavLink to="/profil"><Icon name="user" /><span>Profil</span></NavLink>
+        <NavLink to="/akun"><Icon name="wallet" /><span>Akun</span></NavLink>
+        <NavLink to="/pengaturan"><Icon name="settings" /><span>Pengaturan</span></NavLink>
       </nav>
     </div>
+    </PrivacyCtx.Provider>
   )
 }
 

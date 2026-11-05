@@ -18,6 +18,16 @@ export const useAccounts = () =>
     },
   })
 
+/** Semua akun, termasuk yang diarsipkan (untuk halaman pengelolaan akun). */
+export const useAllAccounts = () =>
+  useQuery({
+    queryKey: ['accounts', 'all'],
+    queryFn: async () => {
+      const rows = check(await supabase.from('accounts').select('*').order('sort_order'))
+      return (rows as Account[]).map((a) => ({ ...a, min_balance: n(a.min_balance) }))
+    },
+  })
+
 export const useCategories = () =>
   useQuery({
     queryKey: ['categories'],
@@ -28,8 +38,13 @@ export const useBalances = () =>
   useQuery({
     queryKey: ['balances'],
     queryFn: async () => {
-      const rows = check(await supabase.from('account_balances').select('*').order('sort_order'))
-      return (rows as Balance[]).map((b) => ({ ...b, balance: n(b.balance), min_balance: n(b.min_balance) }))
+      const [res, act] = await Promise.all([
+        supabase.from('account_balances').select('*').order('sort_order'),
+        supabase.from('accounts').select('id').eq('is_active', true),
+      ])
+      const rows = check(res)
+      const active = new Set((check(act) as { id: string }[]).map((a) => a.id))
+      return (rows as Balance[]).filter((b) => active.has(b.account_id)).map((b) => ({ ...b, balance: n(b.balance), min_balance: n(b.min_balance) }))
     },
   })
 
@@ -40,6 +55,16 @@ export const useTransactions = (start: string) =>
       const rows = check(
         await supabase.from('transactions').select('*').gte('tx_date', start).lte('tx_date', monthEnd(start)).order('tx_date', { ascending: false }).order('created_at', { ascending: false }),
       )
+      return (rows as Tx[]).map((t) => ({ ...t, amount: n(t.amount) }))
+    },
+  })
+
+/** Transaksi dari awal bulan `from` sampai akhir bulan `to` (untuk statistik). */
+export const useTransactionsRange = (from: string, to: string) =>
+  useQuery({
+    queryKey: ['transactions', 'range', from, to],
+    queryFn: async () => {
+      const rows = check(await supabase.from('transactions').select('*').gte('tx_date', from).lte('tx_date', monthEnd(to)).order('tx_date', { ascending: false }).limit(5000))
       return (rows as Tx[]).map((t) => ({ ...t, amount: n(t.amount) }))
     },
   })

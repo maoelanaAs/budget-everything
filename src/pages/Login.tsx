@@ -27,7 +27,7 @@ export default function Login() {
   return (
     <div className="center">
       <form className="login" onSubmit={submit}>
-        <img className="brand-logo" src="/logo.png" alt="" width="76" height="76" />
+        <img className="brand-logo" src="/logo.png" alt="" width="84" height="84" />
         <div>
           <h1 className="wordmark"><span>Budget</span><span>Everything</span></h1>
           <p className="tagline">Take Control of Your Money</p>
